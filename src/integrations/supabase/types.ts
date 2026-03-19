@@ -14,7 +14,198 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      emi_loans: {
+        Row: {
+          created_at: string
+          emi: number
+          id: string
+          name: string
+          paid_months: number
+          principal: number
+          rate: number
+          start_date: string
+          tenure: number
+          total_interest: number
+          total_payable: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emi: number
+          id?: string
+          name: string
+          paid_months?: number
+          principal: number
+          rate: number
+          start_date?: string
+          tenure: number
+          total_interest: number
+          total_payable: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emi?: number
+          id?: string
+          name?: string
+          paid_months?: number
+          principal?: number
+          rate?: number
+          start_date?: string
+          tenure?: number
+          total_interest?: number
+          total_payable?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          read: boolean
+          text: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          read?: boolean
+          text: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          read?: boolean
+          text?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          cashback_earned: number | null
+          created_at: string
+          date: string
+          description: string
+          id: string
+          method: string | null
+          recipient: string | null
+          recipient_email: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          cashback_earned?: number | null
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          method?: string | null
+          recipient?: string | null
+          recipient_email?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          cashback_earned?: number | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          method?: string | null
+          recipient?: string | null
+          recipient_email?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          created_at: string
+          id: string
+          investment_value: number
+          month_cashback: number
+          monthly_expenses: number
+          monthly_income: number
+          savings: number
+          total_balance: number
+          total_cashback: number
+          updated_at: string
+          user_id: string
+          wallet_balance: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          investment_value?: number
+          month_cashback?: number
+          monthly_expenses?: number
+          monthly_income?: number
+          savings?: number
+          total_balance?: number
+          total_cashback?: number
+          updated_at?: string
+          user_id: string
+          wallet_balance?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          investment_value?: number
+          month_cashback?: number
+          monthly_expenses?: number
+          monthly_income?: number
+          savings?: number
+          total_balance?: number
+          total_cashback?: number
+          updated_at?: string
+          user_id?: string
+          wallet_balance?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
