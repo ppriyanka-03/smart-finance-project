@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
+  id: string;
   email: string;
   name: string;
   avatar?: string;
@@ -9,6 +12,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -16,39 +20,57 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const mapUser = (su: SupabaseUser): User => ({
+  id: su.id,
+  email: su.email || '',
+  name: su.user_metadata?.name || su.email?.split('@')[0] || '',
+  avatar: su.user_metadata?.avatar_url,
+});
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('sf_user');
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(mapUser(session.user));
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(mapUser(session.user));
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, _password: string): Promise<boolean> => {
-    // Simulated auth
-    const u: User = { email, name: email.split('@')[0] };
-    setUser(u);
-    localStorage.setItem('sf_user', JSON.stringify(u));
-    return true;
+  const login = async (email: string, password: string): Promise<boolean> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return !error;
   };
 
-  const register = async (name: string, email: string, _password: string): Promise<boolean> => {
-    const u: User = { email, name };
-    setUser(u);
-    localStorage.setItem('sf_user', JSON.stringify(u));
-    return true;
+  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    });
+    return !error;
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('sf_user');
-    localStorage.removeItem('sf_finance');
+    supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

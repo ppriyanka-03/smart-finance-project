@@ -23,12 +23,12 @@ const Payments = () => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [method, setMethod] = useState('');
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'processing'>('idle');
   const [cashbackEarned, setCashbackEarned] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const [notifiedEmail, setNotifiedEmail] = useState('');
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!recipient || !amount || !method || !description) {
       setErrorMsg('Please fill all fields');
       setStatus('error');
@@ -51,12 +51,16 @@ const Payments = () => {
       return;
     }
 
-    const result = makePayment(recipient, amt, method === 'Email' ? 'Net Banking' : method, description);
+    setStatus('processing');
+
+    const result = await makePayment(
+      recipient, amt, method === 'Email' ? 'Net Banking' : method, description, recipientEmail || undefined
+    );
+
     if (result.success) {
       setCashbackEarned(result.cashback);
       setStatus('success');
 
-      // Send in-app notification
       addNotification(
         `Payment of ₹${amt.toLocaleString('en-IN')} sent to ${recipient}${method === 'Email' ? ` (${recipientEmail})` : ''} for "${description}"`,
         'payment'
@@ -66,9 +70,7 @@ const Payments = () => {
         addNotification(`🎉 Cashback of ₹${result.cashback.toFixed(0)} credited to your wallet!`, 'cashback');
       }
 
-      if (method === 'Email' && recipientEmail) {
-        // Simulate email notification to recipient
-        addNotification(`📧 Payment notification sent to ${recipientEmail}`, 'system');
+      if (recipientEmail) {
         setNotifiedEmail(recipientEmail);
       }
 
@@ -115,14 +117,9 @@ const Payments = () => {
               </motion.p>
             )}
             {notifiedEmail && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="mt-3 p-3 rounded-lg bg-info/10 border border-info/20 inline-flex items-center gap-2"
-              >
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mt-3 p-3 rounded-lg bg-info/10 border border-info/20 inline-flex items-center gap-2">
                 <Mail className="w-4 h-4 text-info" />
-                <span className="text-sm text-info">Notification sent to <strong>{notifiedEmail}</strong></span>
+                <span className="text-sm text-info">Email notification sent to <strong>{notifiedEmail}</strong></span>
               </motion.div>
             )}
             <div className="mt-6">
@@ -139,7 +136,6 @@ const Payments = () => {
               </div>
             )}
 
-            {/* Payment Method Selection */}
             <div>
               <label className="text-sm font-medium mb-3 block">Payment Method</label>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -169,37 +165,20 @@ const Payments = () => {
                   {method === 'Email' ? 'Recipient Email' : 'Account / UPI ID'}
                 </label>
                 {method === 'Email' ? (
-                  <Input
-                    type="email"
-                    value={recipientEmail}
-                    onChange={e => setRecipientEmail(e.target.value)}
-                    placeholder="user@example.com"
-                    className="bg-secondary/50"
-                  />
+                  <Input type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="user@example.com" className="bg-secondary/50" />
                 ) : (
                   <Input value={accountId} onChange={e => setAccountId(e.target.value)} placeholder="Enter ID" className="bg-secondary/50" />
                 )}
               </div>
             </div>
 
-            {/* Show email field alongside account ID for non-email methods */}
             {method !== 'Email' && method !== '' && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="overflow-hidden"
-              >
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="overflow-hidden">
                 <label className="text-sm font-medium mb-1.5 block flex items-center gap-2">
                   <Mail className="w-3.5 h-3.5 text-info" />
                   Recipient Email <span className="text-xs text-muted-foreground">(optional — for payment notification)</span>
                 </label>
-                <Input
-                  type="email"
-                  value={recipientEmail}
-                  onChange={e => setRecipientEmail(e.target.value)}
-                  placeholder="user@example.com"
-                  className="bg-secondary/50"
-                />
+                <Input type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="user@example.com" className="bg-secondary/50" />
               </motion.div>
             )}
 
@@ -214,8 +193,14 @@ const Payments = () => {
               </div>
             </div>
 
-            <Button onClick={handlePayment} className="w-full h-12 bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90">
-              {method === 'Email' ? '📧 Send Payment & Notify' : 'Send Payment'}
+            <Button
+              onClick={handlePayment}
+              disabled={status === 'processing'}
+              className="w-full h-12 bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90"
+            >
+              {status === 'processing' ? (
+                <span className="flex items-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></span> Processing...</span>
+              ) : method === 'Email' ? '📧 Send Payment & Notify' : 'Send Payment'}
             </Button>
           </motion.div>
         )}
