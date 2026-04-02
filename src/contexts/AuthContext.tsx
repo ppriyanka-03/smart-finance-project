@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface User {
   email: string;
   name: string;
-  avatar?: string;
+  password: string;
 }
 
 interface AuthContextType {
@@ -19,6 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  // Load user on refresh
   useEffect(() => {
     const stored = localStorage.getItem('sf_user');
     if (stored) {
@@ -26,29 +27,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const login = async (email: string, _password: string): Promise<boolean> => {
-    // Simulated auth
-    const u: User = { email, name: email.split('@')[0] };
-    setUser(u);
-    localStorage.setItem('sf_user', JSON.stringify(u));
+  // ✅ REGISTER
+  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+    const userData: User = { name, email, password };
+
+    localStorage.setItem('sf_user', JSON.stringify(userData));
+    setUser(userData);
+
     return true;
   };
 
-  const register = async (name: string, email: string, _password: string): Promise<boolean> => {
-    const u: User = { email, name };
-    setUser(u);
-    localStorage.setItem('sf_user', JSON.stringify(u));
-    return true;
+  // ✅ LOGIN (FIXED)
+  const login = async (email: string, password: string) => {
+    const stored = localStorage.getItem('sf_user');
+
+    if (!stored) return false;
+
+    const userData: User = JSON.parse(stored);
+
+    if (
+      userData.email.trim() === email.trim() &&
+      userData.password === password
+    ) {
+      setUser(userData);
+      return true;
+    }
+
+    return false;
   };
 
+  // ✅ LOGOUT
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('sf_user');
-    localStorage.removeItem('sf_finance');
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        login,
+        register,
+        logout
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
