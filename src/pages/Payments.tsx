@@ -462,9 +462,9 @@ const Payments = () => {
         action: 'selfTransfer',
         title: `Self Transfer • ${from.bankName} → ${to.bankName}`,
         amount: transferAmount,
-        method: 'Self Transfer',
-        recipient: `${to.bankName}`,
-        description: `Move funds from ${from.bankName} to ${to.bankName}`,
+        method: 'Net Banking',
+        recipient: `${from.bankName} → ${to.bankName}`,
+        description: description || `Transfer from ${from.bankName} to ${to.bankName}`,
       });
       setPinModalOpen(true);
       setStatus('idle');
@@ -540,7 +540,7 @@ const Payments = () => {
         const to = getSelfToAccount();
         if (from && to) {
           const transferResult = await makePayment(recipient, txAmount, method, desc, undefined, voiceInitiated, voiceTranscript, voiceLanguage);
-          
+
           if (!transferResult.success) {
             console.error('Transfer failed:', transferResult.error);
             toast.error(transferResult.error || 'Transfer failed');
@@ -548,6 +548,19 @@ const Payments = () => {
             setPinModalOpen(false);
             return;
           }
+
+          // Update balances: deduct from source and add to destination
+          setBankAccounts(prev =>
+            prev.map(acc => {
+              if (acc.id === from.id) {
+                return { ...acc, balance: acc.balance - txAmount };
+              } else if (acc.id === to.id) {
+                return { ...acc, balance: acc.balance + txAmount };
+              }
+              return acc;
+            })
+          );
+
           toast.success('Self transfer completed successfully!');
         }
       }
